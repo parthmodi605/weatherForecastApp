@@ -15,20 +15,33 @@ class WeatherViewModel {
         }
     }
     var weatherArr = [WeatherModelForecastData]()
+    var cityDict : WeatherModelCityData?
     var reloadWeatherView: (() -> Void)?
+    
+    var fetchedCityName : String {
+        return cityDict?.name ?? ""
+    }
     
     var currentWeather: WeatherInfoStruct? {
         guard !weatherArr.isEmpty else { return nil }
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = date_Format_dd_MM_yy_dash_HH_mm_ss
         let currentDate = Date()
+        let currentDateString = dateFormatter.string(from: currentDate)
         let nearestWeather = weatherArr.min { weather1, weather2 in
-            let time1 = abs(Date(timeIntervalSince1970: weather1.dt ?? TimeInterval()).timeIntervalSince(currentDate))
-            let time2 = abs(Date(timeIntervalSince1970: weather2.dt ?? TimeInterval()).timeIntervalSince(currentDate))
+            guard let dtTxt1 = weather1.dt_txt, let dtTxt2 = weather2.dt_txt else { return false }
+            guard let date1 = dateFormatter.date(from: dtTxt1),
+                  let date2 = dateFormatter.date(from: dtTxt2),
+                  let currentParsedDate = dateFormatter.date(from: currentDateString) else { return false }
+            
+            let time1 = abs(date1.timeIntervalSince(currentParsedDate))
+            let time2 = abs(date2.timeIntervalSince(currentParsedDate))
             return time1 < time2
         }
-        
+            
         guard let selectedWeather = nearestWeather else { return nil }
         return WeatherInfoStruct(
-            date: Date(timeIntervalSince1970: selectedWeather.dt ?? TimeInterval()),
+            date: dateFormatter.date(from: selectedWeather.dt_txt ?? "") ?? Date(),
             temp: kelvinToCelsius(selectedWeather.main?.temp ?? 0.0),
             weatherConditions: selectedWeather.weather?.first?.description?.capitalized ?? "",
             humidity: "\(selectedWeather.main?.humidity ?? 0)%",
@@ -82,6 +95,7 @@ class WeatherViewModel {
             if let response = response, let dataArr = response.list {
                 self.weatherArr.removeAll()
                 self.weatherArr = dataArr
+                self.cityDict = response.city
                 Utils.setStringForKey(self.cityName, key: kLastSearchedCity)
                 self.reloadWeatherView?()
             }

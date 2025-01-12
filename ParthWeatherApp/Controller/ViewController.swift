@@ -52,7 +52,7 @@ class ViewController: UIViewController {
                     stackCurrentWeather.isHidden = false
                     lblInfoMessage.isHidden = true
                     searchBarCity.text = ""
-                    lblCityName.text = viewModel.cityName
+                    lblCityName.text = viewModel.fetchedCityName
                     lblForecastTitle.text = "\(viewModel.getWeatherGroupedByDate().count)-DAY FORECAST"
                     lblTemperature.text = currentWeather.temp
                     lblWeatherConditions.text = currentWeather.weatherConditions
